@@ -19,10 +19,25 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useProfiles, useDeleteProfile } from "@/hooks";
-import { useMarketplaceClient, useAppContext } from "@/components/providers/marketplace";
-import { Plus, Search, Pencil, Trash2, AlertTriangle, Loader2 } from "lucide-react";
+import {
+  useMarketplaceClient,
+  useAppContext,
+} from "@/components/providers/marketplace";
+import {
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  AlertTriangle,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
-import { getProfileValue, siteHasProfile, parseProfileValue, type Site } from "@/types";
+import {
+  getProfileValue,
+  siteHasProfile,
+  parseProfileValue,
+  type Site,
+} from "@/types";
 import { Badge } from "@/components/ui/badge";
 
 export default function ProfilesPage() {
@@ -30,51 +45,57 @@ export default function ProfilesPage() {
   const { deleteProfile, isLoading: isDeleting } = useDeleteProfile();
   const client = useMarketplaceClient();
   const appContext = useAppContext();
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [assignedSiteCount, setAssignedSiteCount] = useState<number | null>(null);
+  const [assignedSiteCount, setAssignedSiteCount] = useState<number | null>(
+    null,
+  );
   const [isCheckingSites, setIsCheckingSites] = useState(false);
 
   const sitecoreContextId = appContext.resourceAccess?.[0]?.context?.preview;
 
   const filteredProfiles = profiles.filter((profile) =>
-    profile.name.toLowerCase().includes(searchQuery.toLowerCase())
+    profile.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Check if profile has sites assigned
-  const checkProfileSites = useCallback(async (profileId: string): Promise<number> => {
-    if (!sitecoreContextId || !client) {
-      return 0;
-    }
-    
-    try {
-      const response = await client.query("xmc.sites.listSites", {
-        params: {
-          query: { sitecoreContextId },
-        },
-      });
-      
-      // Handle SDK response structure
-      let sitesData: Site[] = [];
-      const resp = response as unknown as { data?: { data?: unknown } };
-      
-      if (resp?.data?.data && Array.isArray(resp.data.data)) {
-        sitesData = resp.data.data as Site[];
-      } else if (resp?.data && Array.isArray(resp.data)) {
-        sitesData = resp.data as Site[];
-      } else if (Array.isArray(resp)) {
-        sitesData = resp as Site[];
+  const checkProfileSites = useCallback(
+    async (profileId: string): Promise<number> => {
+      if (!sitecoreContextId || !client) {
+        return 0;
       }
-      
-      // Count sites with this profile
-      return sitesData.filter((site) => siteHasProfile(site, profileId)).length;
-    } catch (error) {
-      console.error("Error checking sites:", error);
-      return 0;
-    }
-  }, [client, sitecoreContextId]);
+
+      try {
+        const response = await client.query("xmc.sites.listSites", {
+          params: {
+            query: { sitecoreContextId },
+          },
+        });
+
+        // Handle SDK response structure
+        let sitesData: Site[] = [];
+        const resp = response as unknown as { data?: { data?: unknown } };
+
+        if (resp?.data?.data && Array.isArray(resp.data.data)) {
+          sitesData = resp.data.data as Site[];
+        } else if (resp?.data && Array.isArray(resp.data)) {
+          sitesData = resp.data as Site[];
+        } else if (Array.isArray(resp)) {
+          sitesData = resp as Site[];
+        }
+
+        // Count sites with this profile
+        return sitesData.filter((site) => siteHasProfile(site, profileId))
+          .length;
+      } catch (error) {
+        console.error("Error checking sites:", error);
+        return 0;
+      }
+    },
+    [client, sitecoreContextId],
+  );
 
   // User clicks delete - check for sites and open dialog
   const handleDeleteClick = async (profileId: string) => {
@@ -82,7 +103,7 @@ export default function ProfilesPage() {
     setAssignedSiteCount(null);
     setDeleteDialogOpen(true);
     setIsCheckingSites(true);
-    
+
     try {
       const count = await checkProfileSites(profileId);
       setAssignedSiteCount(count);
@@ -97,7 +118,7 @@ export default function ProfilesPage() {
   // User confirms delete
   const handleConfirmDelete = async () => {
     if (!pendingDeleteId) return;
-    
+
     const success = await deleteProfile(pendingDeleteId);
     if (success) {
       toast.success("Profile deleted successfully");
@@ -114,8 +135,8 @@ export default function ProfilesPage() {
     setAssignedSiteCount(null);
   };
 
-  const pendingProfile = pendingDeleteId 
-    ? profiles.find(p => p.id === pendingDeleteId) 
+  const pendingProfile = pendingDeleteId
+    ? profiles.find((p) => p.id === pendingDeleteId)
     : null;
 
   const hasSitesAssigned = assignedSiteCount !== null && assignedSiteCount > 0;
@@ -164,7 +185,9 @@ export default function ProfilesPage() {
         ) : filteredProfiles.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">
-              {searchQuery ? "No profiles match your search." : "No profiles found."}
+              {searchQuery
+                ? "No profiles match your search."
+                : "No profiles found."}
             </p>
             {!searchQuery && (
               <Link href="/profiles/new">
@@ -178,7 +201,10 @@ export default function ProfilesPage() {
               const profileValue = getProfileValue(profile);
               const config = parseProfileValue(profileValue);
               return (
-                <Card key={profile.id} className="hover:shadow-md transition-shadow">
+                <Card
+                  key={profile.id}
+                  className="hover:shadow-md transition-shadow"
+                >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
@@ -188,16 +214,27 @@ export default function ProfilesPage() {
                         >
                           {profile.name}
                         </Link>
-                        {config?.disableContentWrap && (
-                          <Badge colorScheme="warning" size="sm" className="gap-1">
-                            <AlertTriangle className="h-3 w-3" />
-                            No Wrapper
+                        {config?.disableContentWrap ? (
+                          <Badge colorScheme="blue" size="sm" className="gap-1">
+                            ck-content wrapper disabled
+                          </Badge>
+                        ) : (
+                          <Badge
+                            colorScheme="success"
+                            size="sm"
+                            className="gap-1"
+                          >
+                            ck-content wrapper enabled
                           </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-1">
                         <Link href={`/profiles/${profile.id}/edit`}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </Link>
@@ -223,7 +260,10 @@ export default function ProfilesPage() {
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => !open && handleCloseDialog()}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -246,17 +286,25 @@ export default function ProfilesPage() {
                 ) : hasSitesAssigned ? (
                   <div className="space-y-3">
                     <p>
-                      The profile <strong>&quot;{pendingProfile?.name}&quot;</strong> is currently assigned to{" "}
-                      <strong>{assignedSiteCount} site{assignedSiteCount !== 1 ? "s" : ""}</strong>.
+                      The profile{" "}
+                      <strong>&quot;{pendingProfile?.name}&quot;</strong> is
+                      currently assigned to{" "}
+                      <strong>
+                        {assignedSiteCount} site
+                        {assignedSiteCount !== 1 ? "s" : ""}
+                      </strong>
+                      .
                     </p>
                     <p>
-                      To delete this profile, first reassign or remove it from all sites in the Sites page.
+                      To delete this profile, first reassign or remove it from
+                      all sites in the Sites page.
                     </p>
                   </div>
                 ) : (
                   <p>
-                    Are you sure you want to delete <strong>&quot;{pendingProfile?.name}&quot;</strong>? 
-                    This action cannot be undone.
+                    Are you sure you want to delete{" "}
+                    <strong>&quot;{pendingProfile?.name}&quot;</strong>? This
+                    action cannot be undone.
                   </p>
                 )}
               </div>

@@ -14,13 +14,16 @@ The RTE Profiles Manager allows content administrators to:
 ## Features
 
 ### Profiles Management
+
 - Visual toolbar builder with drag-and-drop interface
 - JSON editor with validation for advanced configuration
 - Custom styles support for the Styles dropdown
 - Live toolbar preview showing exactly how the RTE will appear
 - Protection against deleting profiles that are assigned to sites
+- Enable or Disable Content wrapper (ck-editor div )
 
 ### Sites Management
+
 - View all sites and their assigned editor profiles
 - Assign or change profiles for individual sites
 - Search and filter sites
@@ -84,7 +87,3 @@ hooks/
 ├── useProfiles.ts        # Profile CRUD operations
 └── useSites.ts           # Site operations
 ```
-
-## License
-
-Proprietary - Sitecore

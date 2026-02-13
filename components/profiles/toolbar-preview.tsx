@@ -77,18 +77,15 @@ export function ToolbarPreview({ value, compact = false, className }: ToolbarPre
                   <CKIcon svg={CKEditorIcons.chevronDown} className="h-2.5 w-2.5" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-48 p-2" align="start">
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">
-                    {group.label} items:
-                  </p>
+              <PopoverContent className="w-auto p-1.5" align="start">
+                <div className="flex items-center gap-0.5">
                   {group.items.map((groupItem, i) => {
                     // Handle separator within group
                     if (groupItem === "|") {
                       return (
                         <div
                           key={`sep-${i}`}
-                          className="my-1 border-t border-border"
+                          className="w-px h-5 bg-border mx-0.5"
                         />
                       );
                     }
@@ -96,7 +93,8 @@ export function ToolbarPreview({ value, compact = false, className }: ToolbarPre
                     return (
                       <div
                         key={`${groupItem}-${i}`}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted"
+                        className="p-1.5 rounded hover:bg-muted text-muted-foreground cursor-pointer"
+                        title={getItemLabel(groupItem)}
                       >
                         {itemIconSvg ? (
                           <CKIcon svg={itemIconSvg} className="h-4 w-4" />
@@ -105,7 +103,6 @@ export function ToolbarPreview({ value, compact = false, className }: ToolbarPre
                             {groupItem.slice(0, 2).toUpperCase()}
                           </span>
                         )}
-                        <span className="text-sm">{getItemLabel(groupItem)}</span>
                       </div>
                     );
                   })}

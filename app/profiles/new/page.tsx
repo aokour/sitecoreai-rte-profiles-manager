@@ -34,6 +34,7 @@ export default function NewProfilePage() {
   const [config, setConfig] = useState<EditorProfileConfig>({
     toolbar: { items: [] },
   });
+  const [showValidation, setShowValidation] = useState(false);
 
   const handleSelectTemplate = useCallback((template: ProfileTemplate) => {
     setSelectedTemplate(template);
@@ -53,6 +54,7 @@ export default function NewProfilePage() {
 
   const handleSave = async () => {
     if (!profileName.trim()) {
+      setShowValidation(true);
       toast.error("Please enter a profile name");
       return;
     }
@@ -188,6 +190,7 @@ export default function NewProfilePage() {
           onProfileNameChange={setProfileName}
           initialConfig={config}
           onConfigChange={setConfig}
+          showValidation={showValidation}
         />
       </div>
     </AppShell>

@@ -24,6 +24,7 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
   const [profileName, setProfileName] = useState("");
   const [config, setConfig] = useState<EditorProfileConfig | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
 
   useEffect(() => {
     if (profile && !initialized) {
@@ -37,6 +38,7 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
 
   const handleSave = async () => {
     if (!profileName.trim()) {
+      setShowValidation(true);
       toast.error("Please enter a profile name");
       return;
     }
@@ -122,6 +124,7 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
             onProfileNameChange={setProfileName}
             initialConfig={config}
             onConfigChange={setConfig}
+            showValidation={showValidation}
           />
         )}
       </div>

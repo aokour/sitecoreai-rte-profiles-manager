@@ -64,6 +64,7 @@ interface ToolbarBuilderProps {
   onProfileNameChange: (name: string) => void;
   initialConfig?: EditorProfileConfig;
   onConfigChange: (config: EditorProfileConfig) => void;
+  showValidation?: boolean;
 }
 
 export function ToolbarBuilder({
@@ -71,6 +72,7 @@ export function ToolbarBuilder({
   onProfileNameChange,
   initialConfig,
   onConfigChange,
+  showValidation = false,
 }: ToolbarBuilderProps) {
   // Convert initial config to builder items
   const parseConfigToItems = useCallback(
@@ -121,6 +123,12 @@ export function ToolbarBuilder({
   const [stylesModalOpen, setStylesModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(true);
+  const [profileNameTouched, setProfileNameTouched] = useState(false);
+
+  // Profile name validation - show error if touched OR if parent requested validation
+  const profileNameError = (profileNameTouched || showValidation) && !profileName.trim() 
+    ? "Profile name is required" 
+    : null;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -302,14 +310,25 @@ export function ToolbarBuilder({
     >
       <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="profile-name">Profile Name</Label>
+          <Label htmlFor="profile-name">
+            Profile Name <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="profile-name"
             value={profileName}
             onChange={(e) => onProfileNameChange(e.target.value)}
+            onBlur={() => setProfileNameTouched(true)}
             placeholder="Enter profile name"
-            className="max-w-md"
+            className={`max-w-md ${profileNameError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+            aria-invalid={!!profileNameError}
+            aria-describedby={profileNameError ? "profile-name-error" : undefined}
           />
+          {profileNameError && (
+            <p id="profile-name-error" className="text-sm text-destructive flex items-center gap-1.5">
+              <AlertCircle className="h-3.5 w-3.5" />
+              {profileNameError}
+            </p>
+          )}
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>

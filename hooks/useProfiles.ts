@@ -307,6 +307,14 @@ export function useDeleteProfile(): UseDeleteProfileReturn {
 
         return true;
       } catch (err) {
+        // Handle 204 No Content response parsing error
+        // The delete succeeds but SDK fails to parse empty response body
+        if (err instanceof TypeError && 
+            err.message.includes("Response with null body status cannot have body")) {
+          // The delete was successful, just the response parsing failed
+          return true;
+        }
+        
         console.error("Error deleting profile:", err);
         setError(err instanceof Error ? err.message : "Failed to delete profile");
         return false;

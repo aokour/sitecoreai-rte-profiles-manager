@@ -81,7 +81,7 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
       <AppShell>
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-4">Profile not found.</p>
-          <Link href="/profiles">
+          <Link href="/">
             <Button>Back to Profiles</Button>
           </Link>
         </div>

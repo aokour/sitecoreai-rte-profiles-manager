@@ -64,8 +64,8 @@ export const CKEditorIcons = {
 
   chevronDown: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M16.435 5.506a.75.75 0 0 1 1.197.899l-.067.089-6.992 8a.75.75 0 0 1-1.05.078l-.079-.078-7.008-8a.75.75 0 0 1 1.049-1.066l.08.078 6.442 7.354z"/></svg>`,
 
-  // Styles dropdown icon (paintbrush/format style)
-  style: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M16.9 3.1c-.5-.5-1.2-.5-1.7 0l-7 7c-.1.1-.2.3-.2.5v2.2c0 .4.3.7.7.7h2.2c.2 0 .4-.1.5-.2l7-7c.5-.5.5-1.2 0-1.7l-1.5-1.5zM10 12H9v-1l5.6-5.6 1 1L10 12zM4 15h12v2H4z"/></svg>`,
+  // Styles dropdown icon (text with decoration)
+  style: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M10.187 17H5.773c-.637 0-1.092-.138-1.364-.415-.273-.277-.409-.718-.409-1.323V4.738c0-.617.14-1.062.419-1.332.279-.27.73-.406 1.354-.406h4.68c.69 0 1.288.041 1.793.124.506.083.96.242 1.36.478.341.197.644.447.906.75a3.262 3.262 0 0 1 .808 2.162c0 1.401-.722 2.426-2.167 3.075C15.05 10.175 16 11.315 16 13.01a3.756 3.756 0 0 1-2.296 3.504 6.1 6.1 0 0 1-1.517.377c-.571.073-1.238.11-2 .11zm-.217-6.217H7v4.087h3.069c1.977 0 2.965-.69 2.965-2.072 0-.707-.256-1.22-.768-1.537-.512-.319-1.277-.478-2.296-.478zM7 5.13v3.619h2.606c.729 0 1.292-.067 1.69-.2a1.6 1.6 0 0 0 .91-.765c.165-.267.247-.566.247-.897 0-.707-.26-1.176-.778-1.409-.519-.232-1.31-.348-2.375-.348H7z"/><circle cx="16" cy="16" r="3" fill="currentColor"/></svg>`,
 } as const;
 
 // Type for icon keys
@@ -73,38 +73,38 @@ export type CKEditorIconName = keyof typeof CKEditorIcons;
 
 // Map toolbar item IDs to CKEditor icon names
 export const TOOLBAR_ICON_MAP: Record<string, CKEditorIconName> = {
-  bold: 'bold',
-  italic: 'italic',
-  emphasis: 'text',
-  underline: 'underline',
-  strikethrough: 'strikethrough',
-  subscript: 'subscript',
-  superscript: 'superscript',
-  removeFormat: 'removeFormat',
-  fontColor: 'fontColor',
-  fontBackgroundColor: 'fontBackgroundColor',
-  heading: 'heading',
-  alignment: 'alignment',
-  blockQuote: 'blockQuote',
-  bulletedList: 'bulletedList',
-  numberedList: 'numberedList',
-  indent: 'indent',
-  outdent: 'outdent',
-  link: 'link',
-  internalLink: 'internalLink',
-  phoneLink: 'phoneLink',
-  sitecoreSelectMedia: 'image',
-  insertTable: 'table',
-  horizontalLine: 'horizontalLine',
-  style: 'style',
-  sourceEditing: 'sourceEditing',
-  sitecoreResetFieldValue: 'history',
+  bold: "bold",
+  italic: "italic",
+  emphasis: "text",
+  underline: "underline",
+  strikethrough: "strikethrough",
+  subscript: "subscript",
+  superscript: "superscript",
+  removeFormat: "removeFormat",
+  fontColor: "fontColor",
+  fontBackgroundColor: "fontBackgroundColor",
+  heading: "heading",
+  alignment: "alignment",
+  blockQuote: "blockQuote",
+  bulletedList: "bulletedList",
+  numberedList: "numberedList",
+  indent: "indent",
+  outdent: "outdent",
+  link: "link",
+  internalLink: "internalLink",
+  phoneLink: "phoneLink",
+  sitecoreSelectMedia: "image",
+  insertTable: "table",
+  horizontalLine: "horizontalLine",
+  style: "style",
+  sourceEditing: "sourceEditing",
+  sitecoreResetFieldValue: "history",
 };
 
 // Map group icon IDs to CKEditor icon names
 export const GROUP_ICON_MAP: Record<string, CKEditorIconName> = {
-  text: 'text',
-  plus: 'plus',
+  text: "text",
+  plus: "plus",
 };
 
 // Get icon SVG for a toolbar item

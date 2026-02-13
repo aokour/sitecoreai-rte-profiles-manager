@@ -22,7 +22,7 @@ The RTE Profiles Manager allows content administrators to:
 - Protection against deleting profiles that are assigned to sites
 - Enable or Disable Content wrapper (ck-editor div )
 
-### Sites Management
+### Sites RTE Profile Management
 
 - View all sites and their assigned editor profiles
 - Assign or change profiles for individual sites

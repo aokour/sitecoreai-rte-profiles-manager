@@ -26,7 +26,7 @@ interface UseCollectionsReturn {
 }
 
 interface UseUpdateSiteReturn {
-  updateSite: (siteId: string, editorProfileId: string | null) => Promise<Site | null>;
+  updateSite: (siteId: string, editorProfileIds: string[]) => Promise<Site | null>;
   isLoading: boolean;
   error: string | null;
 }
@@ -222,7 +222,7 @@ export function useUpdateSite(): UseUpdateSiteReturn {
   const sitecoreContextId = appContext.resourceAccess?.[0]?.context?.preview;
 
   const updateSite = useCallback(
-    async (siteId: string, editorProfileId: string | null): Promise<Site | null> => {
+    async (siteId: string, editorProfileIds: string[]): Promise<Site | null> => {
       if (!sitecoreContextId) {
         setError("No Sitecore context available");
         return null;
@@ -232,12 +232,10 @@ export function useUpdateSite(): UseUpdateSiteReturn {
       setError(null);
 
       try {
-        // editorProfiles is an array of profile IDs
-        const editorProfiles = editorProfileId ? [editorProfileId] : [];
         const response = await client.mutate("xmc.sites.updateSite", {
           params: {
             path: { siteId },
-            body: { editorProfiles },
+            body: { editorProfiles: editorProfileIds },
             query: { sitecoreContextId },
           },
         });

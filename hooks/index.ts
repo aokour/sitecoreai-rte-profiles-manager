@@ -11,6 +11,5 @@ export {
   useSite,
   useCollections,
   useUpdateSite,
-  useBulkUpdateSites,
   useSitesWithProfiles,
 } from "./useSites";

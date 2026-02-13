@@ -1,20 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -23,20 +12,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useSites, useProfiles, useUpdateSite, useBulkUpdateSites } from "@/hooks";
-import { getSiteEditorProfileId } from "@/types";
-import { Search, Settings2 } from "lucide-react";
+import { ProfileAssignment } from "@/components/sites/profile-assignment";
+import { useSites, useProfiles, useUpdateSite } from "@/hooks";
+import { getSiteEditorProfiles } from "@/types";
+import { Search } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SitesPage() {
   const { sites, isLoading: sitesLoading, refetch: refetchSites } = useSites();
   const { profiles, isLoading: profilesLoading } = useProfiles();
   const { updateSite, isLoading: updateLoading } = useUpdateSite();
-  const { bulkUpdateSites, isLoading: bulkLoading, progress } = useBulkUpdateSites();
   
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSites, setSelectedSites] = useState<string[]>([]);
-  const [bulkProfileId, setBulkProfileId] = useState<string>("");
 
   const isLoading = sitesLoading || profilesLoading;
 
@@ -46,55 +33,14 @@ export default function SitesPage() {
       (site.displayName?.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const getProfileName = (profileId: string | undefined) => {
-    if (!profileId) return null;
-    const profile = profiles.find((p) => p.id === profileId);
-    return profile?.name || "Unknown";
-  };
-
-  const handleProfileChange = async (siteId: string, profileId: string | null) => {
-    const result = await updateSite(siteId, profileId);
+  const handleProfilesUpdate = async (siteId: string, profileIds: string[]) => {
+    const result = await updateSite(siteId, profileIds);
     if (result) {
-      toast.success("Site profile updated");
+      toast.success("Site profiles updated");
       refetchSites();
     } else {
-      toast.error("Failed to update site profile");
+      toast.error("Failed to update site profiles");
     }
-  };
-
-  const handleBulkAssign = async () => {
-    if (selectedSites.length === 0) {
-      toast.error("Please select at least one site");
-      return;
-    }
-
-    const profileId = bulkProfileId === "none" ? null : bulkProfileId;
-    const success = await bulkUpdateSites(selectedSites, profileId);
-    
-    if (success) {
-      toast.success(`Updated ${selectedSites.length} sites`);
-      setSelectedSites([]);
-      setBulkProfileId("");
-      refetchSites();
-    } else {
-      toast.error("Some sites failed to update");
-    }
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedSites.length === filteredSites.length) {
-      setSelectedSites([]);
-    } else {
-      setSelectedSites(filteredSites.map((s) => s.id));
-    }
-  };
-
-  const toggleSelect = (siteId: string) => {
-    setSelectedSites((prev) =>
-      prev.includes(siteId)
-        ? prev.filter((id) => id !== siteId)
-        : [...prev, siteId]
-    );
   };
 
   return (
@@ -107,7 +53,7 @@ export default function SitesPage() {
           </p>
         </div>
 
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -117,35 +63,6 @@ export default function SitesPage() {
               className="pl-9"
             />
           </div>
-
-          {selectedSites.length > 0 && (
-            <div className="flex items-center gap-2">
-              <Badge colorScheme="primary">{selectedSites.length} selected</Badge>
-              <Select value={bulkProfileId} onValueChange={setBulkProfileId}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select profile" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No profile</SelectItem>
-                  {profiles.map((profile) => (
-                    <SelectItem key={profile.id} value={profile.id}>
-                      {profile.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={handleBulkAssign}
-                disabled={!bulkProfileId || bulkLoading}
-                className="gap-2"
-              >
-                <Settings2 className="h-4 w-4" />
-                {bulkLoading
-                  ? `Updating ${progress.completed}/${progress.total}...`
-                  : "Assign"}
-              </Button>
-            </div>
-          )}
         </div>
 
         {isLoading ? (
@@ -165,30 +82,14 @@ export default function SitesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={
-                        selectedSites.length === filteredSites.length &&
-                        filteredSites.length > 0
-                      }
-                      onCheckedChange={toggleSelectAll}
-                    />
-                  </TableHead>
                   <TableHead>Site Name</TableHead>
                   <TableHead>Collection</TableHead>
-                  <TableHead>Editor Profile</TableHead>
-                  <TableHead className="w-[200px]">Actions</TableHead>
+                  <TableHead>Editor Profiles</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSites.map((site) => (
                   <TableRow key={site.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedSites.includes(site.id)}
-                        onCheckedChange={() => toggleSelect(site.id)}
-                      />
-                    </TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">
@@ -207,39 +108,13 @@ export default function SitesPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {getSiteEditorProfileId(site) ? (
-                        <Link href={`/profiles/${getSiteEditorProfileId(site)}`}>
-                          <Badge colorScheme="primary" className="cursor-pointer">
-                            {getProfileName(getSiteEditorProfileId(site))}
-                          </Badge>
-                        </Link>
-                      ) : (
-                        <Badge colorScheme="neutral">No profile</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={getSiteEditorProfileId(site) || "none"}
-                        onValueChange={(value) =>
-                          handleProfileChange(
-                            site.id,
-                            value === "none" ? null : value
-                          )
-                        }
+                      <ProfileAssignment
+                        siteId={site.id}
+                        assignedProfileIds={getSiteEditorProfiles(site)}
+                        allProfiles={profiles}
+                        onUpdate={(profileIds) => handleProfilesUpdate(site.id, profileIds)}
                         disabled={updateLoading}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Assign profile" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No profile</SelectItem>
-                          {profiles.map((profile) => (
-                            <SelectItem key={profile.id} value={profile.id}>
-                              {profile.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

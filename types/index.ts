@@ -61,31 +61,37 @@ export interface Site {
   };
 }
 
-// Helper to get editor profile IDs from site (handles string, array, and settings.editorProfiles)
-export function getSiteEditorProfiles(site: Site): string[] {
-  // Check settings.editorProfiles first (where API actually stores it)
-  const settingsProfiles = site.settings?.editorProfiles;
-  if (settingsProfiles) {
-    if (Array.isArray(settingsProfiles)) {
-      return settingsProfiles;
-    }
-    if (typeof settingsProfiles === 'string' && settingsProfiles) {
-      return [settingsProfiles];
-    }
+// Helper to parse profile IDs from string or array format
+function parseProfileIds(value: string | string[] | undefined): string[] {
+  if (!value) return [];
+  
+  if (Array.isArray(value)) {
+    // Flatten in case array contains comma-separated strings
+    return value.flatMap(v => 
+      typeof v === 'string' && v.includes(',') 
+        ? v.split(',').map(id => id.trim()).filter(Boolean)
+        : v
+    ).filter(Boolean);
   }
   
-  // Fallback to top-level editorProfiles
-  const profiles = site.editorProfiles;
-  if (profiles) {
-    if (Array.isArray(profiles)) {
-      return profiles;
-    }
-    if (typeof profiles === 'string' && profiles) {
-      return [profiles];
-    }
+  if (typeof value === 'string' && value) {
+    // Handle comma-separated string
+    return value.split(',').map(id => id.trim()).filter(Boolean);
   }
   
   return [];
+}
+
+// Helper to get editor profile IDs from site (handles string, array, and settings.editorProfiles)
+export function getSiteEditorProfiles(site: Site): string[] {
+  // Check settings.editorProfiles first (where API actually stores it)
+  const settingsProfiles = parseProfileIds(site.settings?.editorProfiles);
+  if (settingsProfiles.length > 0) {
+    return settingsProfiles;
+  }
+  
+  // Fallback to top-level editorProfiles
+  return parseProfileIds(site.editorProfiles);
 }
 
 // Helper to check if site has a specific profile

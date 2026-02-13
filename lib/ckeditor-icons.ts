@@ -75,7 +75,7 @@ export type CKEditorIconName = keyof typeof CKEditorIcons;
 export const TOOLBAR_ICON_MAP: Record<string, CKEditorIconName> = {
   bold: "bold",
   italic: "italic",
-  emphasis: "text",
+  emphasis: "emphasis",
   underline: "underline",
   strikethrough: "strikethrough",
   subscript: "subscript",

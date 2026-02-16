@@ -104,7 +104,7 @@ export function ToolbarBuilder({
     parseConfigToItems(initialConfig),
   );
   const [styles, setStyles] = useState<StyleDefinition[]>(
-    () => initialConfig?.style || [],
+    () => initialConfig?.style?.definitions || [],
   );
   const [disableContentWrap, setDisableContentWrap] = useState<boolean>(
     () => initialConfig?.disableContentWrap || false,
@@ -159,7 +159,7 @@ export function ToolbarBuilder({
 
       // Only include style property if there are styles defined
       if (currentStyles.length > 0) {
-        config.style = currentStyles;
+        config.style = { definitions: currentStyles };
       }
 
       // Only include disableContentWrap if true
@@ -443,8 +443,8 @@ export function ToolbarBuilder({
                         const newItems = parseConfigToItems(parsed);
                         setItems(newItems);
                         // Also update styles from parsed config
-                        if (parsed.style && Array.isArray(parsed.style)) {
-                          setStyles(parsed.style);
+                        if (parsed.style?.definitions && Array.isArray(parsed.style.definitions)) {
+                          setStyles(parsed.style.definitions);
                         } else {
                           setStyles([]);
                         }

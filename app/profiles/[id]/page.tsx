@@ -140,7 +140,7 @@ export default function ProfileDetailPage({ params }: ProfileDetailPageProps) {
               </CardContent>
             </Card>
 
-            {config?.style && config.style.length > 0 && (
+            {config?.style?.definitions && config.style.definitions.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle>Custom Styles</CardTitle>
@@ -148,7 +148,7 @@ export default function ProfileDetailPage({ params }: ProfileDetailPageProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {config.style.map((styleDef, index) => (
+                    {config.style.definitions.map((styleDef, index) => (
                       <div key={index} className="p-3 border rounded-lg bg-muted/30">
                         <div className="font-medium text-sm">{styleDef.name}</div>
                         <div className="text-xs text-muted-foreground mt-1">

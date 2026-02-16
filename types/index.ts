@@ -15,7 +15,7 @@ export interface EditorProfileConfig {
   toolbar: {
     items: (string | ToolbarGroup)[];
   };
-  style?: StyleDefinition[]; // Custom styles for the Styles dropdown
+  style?: { definitions: StyleDefinition[] }; // Custom styles for the Styles dropdown
   disableContentWrap?: boolean; // Disable the automatic ck-content wrapper around RTE output
 }
 
@@ -436,21 +436,28 @@ export function validateProfileConfig(jsonString: string): ValidationResult {
   
   // Check for style definitions if present
   if (config.style !== undefined) {
-    if (!Array.isArray(config.style)) {
-      errors.push('"style" must be an array of style definitions');
+    if (typeof config.style !== 'object' || config.style === null) {
+      errors.push('"style" must be an object with a "definitions" array');
     } else {
-      const styleArray = config.style as unknown[];
-      styleArray.forEach((styleDef, index) => {
-        const styleErrors = validateStyleDefinition(styleDef, index);
-        errors.push(...styleErrors);
-      });
+      const styleConfig = config.style as Record<string, unknown>;
+      if (!styleConfig.definitions) {
+        errors.push('"style" must have a "definitions" property');
+      } else if (!Array.isArray(styleConfig.definitions)) {
+        errors.push('"style.definitions" must be an array');
+      } else {
+        const styleArray = styleConfig.definitions as unknown[];
+        styleArray.forEach((styleDef, index) => {
+          const styleErrors = validateStyleDefinition(styleDef, index);
+          errors.push(...styleErrors);
+        });
 
-      // Warning if style toolbar item is not present
-      const hasStyleItem = Array.isArray(toolbar.items) && toolbar.items.some(
-        (item: unknown) => item === 'style'
-      );
-      if (styleArray.length > 0 && !hasStyleItem) {
-        warnings.push('Custom styles defined but "style" item not in toolbar. Add "style" to toolbar.items to enable the Styles dropdown.');
+        // Warning if style toolbar item is not present
+        const hasStyleItem = Array.isArray(toolbar.items) && toolbar.items.some(
+          (item: unknown) => item === 'style'
+        );
+        if (styleArray.length > 0 && !hasStyleItem) {
+          warnings.push('Custom styles defined but "style" item not in toolbar. Add "style" to toolbar.items to enable the Styles dropdown.');
+        }
       }
     }
   }

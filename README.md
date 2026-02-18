@@ -1,6 +1,6 @@
-# SitecoreAI RTE Profiles Manager
+# SitecoreAI Editor Profile Manager
 
-A Sitecore Marketplace App for managing Rich Text Editor (RTE) toolbar configurations across your Sitecore XM Cloud sites.
+A Sitecore Marketplace App for managing Rich Text Editor (Editor Profile) toolbar configurations across your SitecoreAI sites.
 
 ## Overview
 
@@ -26,7 +26,6 @@ The RTE Profiles Manager allows content administrators to:
 
 - View all sites and their assigned editor profiles
 - Assign or change profiles for individual sites
-- Search and filter sites
 
 ## Tech Stack
 
@@ -40,8 +39,7 @@ The RTE Profiles Manager allows content administrators to:
 ### Prerequisites
 
 - Node.js 18+
-- Access to Sitecore XM Cloud environment
-- Sitecore Marketplace SDK credentials
+- Access to SitecoreAI environment
 
 ### Installation
 

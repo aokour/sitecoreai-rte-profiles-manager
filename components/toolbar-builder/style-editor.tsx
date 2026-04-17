@@ -1,6 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +38,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Paintbrush, AlertCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, Paintbrush, AlertCircle, GripVertical } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { StyleDefinition } from "@/types";
 
 // Common HTML elements for styles
@@ -47,6 +65,83 @@ interface StyleEditorProps {
   isInModal?: boolean;
 }
 
+interface SortableStyleRowProps {
+  style: StyleDefinition;
+  index: number;
+  onEdit: (index: number) => void;
+  onDelete: (index: number) => void;
+}
+
+function SortableStyleRow({ style, index, onEdit, onDelete }: SortableStyleRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `style-${index}` });
+
+  const rowStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={rowStyle}
+      className={cn(
+        "flex items-center justify-between p-3 border rounded-lg bg-background",
+        isDragging && "opacity-50 shadow-lg z-10"
+      )}
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="cursor-grab hover:bg-muted rounded p-0.5 mr-2 flex-shrink-0"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      </button>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-sm">{style.name}</span>
+          <Badge colorScheme="neutral" className="text-xs">
+            &lt;{style.element}&gt;
+          </Badge>
+        </div>
+        <div className="flex flex-wrap gap-1 mt-1">
+          {style.classes.map((cls, i) => (
+            <code key={i} className="text-xs px-1.5 py-0.5 rounded bg-muted">
+              .{cls}
+            </code>
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center gap-1 ml-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onEdit(index)}
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-destructive hover:text-destructive"
+          onClick={() => onDelete(index)}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function StyleEditor({ styles, onChange, hasStyleToolbarItem, isInModal = false }: StyleEditorProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -56,6 +151,26 @@ export function StyleEditor({ styles, onChange, hasStyleToolbarItem, isInModal =
     classes: [],
   });
   const [classInput, setClassInput] = useState("");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = Number(String(active.id).replace("style-", ""));
+    const newIndex = Number(String(over.id).replace("style-", ""));
+    if (Number.isNaN(oldIndex) || Number.isNaN(newIndex)) return;
+    onChange(arrayMove(styles, oldIndex, newIndex));
+  };
 
   const handleAddStyle = () => {
     setEditingIndex(null);
@@ -121,48 +236,28 @@ export function StyleEditor({ styles, onChange, hasStyleToolbarItem, isInModal =
           <p className="text-xs">Add styles to give authors ready-to-use formatting options</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {styles.map((style, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between p-3 border rounded-lg bg-background"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm">{style.name}</span>
-                  <Badge colorScheme="neutral" className="text-xs">
-                    &lt;{style.element}&gt;
-                  </Badge>
-                </div>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {style.classes.map((cls, i) => (
-                    <code key={i} className="text-xs px-1.5 py-0.5 rounded bg-muted">
-                      .{cls}
-                    </code>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center gap-1 ml-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handleEditStyle(index)}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive hover:text-destructive"
-                  onClick={() => handleDeleteStyle(index)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={styles.map((_, index) => `style-${index}`)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-2">
+              {styles.map((style, index) => (
+                <SortableStyleRow
+                  key={`style-${index}`}
+                  style={style}
+                  index={index}
+                  onEdit={handleEditStyle}
+                  onDelete={handleDeleteStyle}
+                />
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       <Button variant="outline" size="sm" onClick={handleAddStyle} className="w-full">
@@ -270,7 +365,7 @@ export function StyleEditor({ styles, onChange, hasStyleToolbarItem, isInModal =
           <CardTitle className="text-sm">Custom Styles</CardTitle>
         </div>
         <CardDescription>
-          Define custom styles that appear in the Styles dropdown. Authors can apply these to selected content.
+          Define custom styles that appear in the Styles dropdown. Authors can apply these to selected content. Drag to reorder.
         </CardDescription>
       </CardHeader>
       <CardContent>

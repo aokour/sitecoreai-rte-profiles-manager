@@ -551,7 +551,7 @@ export function ToolbarBuilder({
             <DialogTitle>Custom Styles</DialogTitle>
             <DialogDescription>
               Define custom styles that authors can apply to content in the RTE
-              editor.
+              editor. Drag to reorder.
             </DialogDescription>
           </DialogHeader>
           <StyleEditor

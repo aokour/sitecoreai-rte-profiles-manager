@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -30,33 +30,37 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Paintbrush, AlertCircle, GripVertical } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Paintbrush,
+  AlertCircle,
+  GripVertical,
+  Check,
+  ChevronsUpDown,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { StyleDefinition } from "@/types";
+import {
+  STYLE_ELEMENT_GROUP_ORDER,
+  STYLE_ELEMENT_PRESETS,
+  VALID_STYLE_ELEMENTS,
+  type StyleDefinition,
+  type StyleElementGroup,
+} from "@/types";
 
-// Common HTML elements for styles
-const STYLE_ELEMENTS = [
-  { value: "p", label: "Paragraph (p)" },
-  { value: "span", label: "Span (span)" },
-  { value: "div", label: "Division (div)" },
-  { value: "h1", label: "Heading 1 (h1)" },
-  { value: "h2", label: "Heading 2 (h2)" },
-  { value: "h3", label: "Heading 3 (h3)" },
-  { value: "h4", label: "Heading 4 (h4)" },
-  { value: "h5", label: "Heading 5 (h5)" },
-  { value: "h6", label: "Heading 6 (h6)" },
-  { value: "blockquote", label: "Blockquote (blockquote)" },
-  { value: "pre", label: "Preformatted (pre)" },
-  { value: "code", label: "Code (code)" },
-];
+const TAG_NAME_REGEX = /^[a-z][a-z0-9-]*$/;
 
 interface StyleEditorProps {
   styles: StyleDefinition[];
@@ -151,6 +155,24 @@ export function StyleEditor({ styles, onChange, hasStyleToolbarItem, isInModal =
     classes: [],
   });
   const [classInput, setClassInput] = useState("");
+  const [useCustomElement, setUseCustomElement] = useState(false);
+  const [elementPopoverOpen, setElementPopoverOpen] = useState(false);
+
+  const presetsByGroup = useMemo(() => {
+    const map = {} as Record<StyleElementGroup, typeof STYLE_ELEMENT_PRESETS>;
+    for (const group of STYLE_ELEMENT_GROUP_ORDER) {
+      map[group] = STYLE_ELEMENT_PRESETS.filter((p) => p.group === group);
+    }
+    return map;
+  }, []);
+
+  const currentPresetLabel = useMemo(
+    () => STYLE_ELEMENT_PRESETS.find((p) => p.value === formData.element)?.label,
+    [formData.element]
+  );
+  const triggerLabel = useCustomElement
+    ? "Custom element"
+    : currentPresetLabel ?? "Select element";
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -176,6 +198,7 @@ export function StyleEditor({ styles, onChange, hasStyleToolbarItem, isInModal =
     setEditingIndex(null);
     setFormData({ name: "", element: "p", classes: [] });
     setClassInput("");
+    setUseCustomElement(false);
     setDialogOpen(true);
   };
 
@@ -184,6 +207,9 @@ export function StyleEditor({ styles, onChange, hasStyleToolbarItem, isInModal =
     setEditingIndex(index);
     setFormData({ ...style });
     setClassInput(style.classes.join(" "));
+    // Auto-enter custom mode when the saved tag isn't in the curated list so
+    // the input is pre-populated and the picker reflects the actual value.
+    setUseCustomElement(!VALID_STYLE_ELEMENTS.includes(style.element));
     setDialogOpen(true);
   };
 
@@ -216,7 +242,16 @@ export function StyleEditor({ styles, onChange, hasStyleToolbarItem, isInModal =
     setDialogOpen(false);
   };
 
-  const isFormValid = formData.name.trim() && formData.element && classInput.trim();
+  const elementIsValid = useCustomElement
+    ? TAG_NAME_REGEX.test(formData.element)
+    : Boolean(formData.element);
+  const customElementHasError =
+    useCustomElement && formData.element.length > 0 && !TAG_NAME_REGEX.test(formData.element);
+  const customElementIsUnknown =
+    useCustomElement &&
+    TAG_NAME_REGEX.test(formData.element) &&
+    !VALID_STYLE_ELEMENTS.includes(formData.element);
+  const isFormValid = Boolean(formData.name.trim()) && elementIsValid && Boolean(classInput.trim());
 
   const content = (
     <div className="space-y-4">
@@ -265,7 +300,13 @@ export function StyleEditor({ styles, onChange, hasStyleToolbarItem, isInModal =
         Add Custom Style
       </Button>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setElementPopoverOpen(false);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -292,24 +333,116 @@ export function StyleEditor({ styles, onChange, hasStyleToolbarItem, isInModal =
 
             <div className="space-y-2">
               <Label htmlFor="style-element">HTML Element</Label>
-              <Select
-                value={formData.element}
-                onValueChange={(value) => setFormData({ ...formData, element: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select element" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STYLE_ELEMENTS.map((el) => (
-                    <SelectItem key={el.value} value={el.value}>
-                      {el.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                The HTML element that wraps the styled content
-              </p>
+              <Popover open={elementPopoverOpen} onOpenChange={setElementPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="style-element"
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={elementPopoverOpen}
+                    className="w-full justify-between font-normal"
+                  >
+                    <span className="truncate text-left">{triggerLabel}</span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  className="w-[var(--radix-popover-trigger-width)] min-w-[420px] p-0"
+                >
+                  <Command>
+                    <CommandInput
+                      placeholder="Search elements..."
+                      aria-label="Search HTML elements"
+                    />
+                    <CommandList className="max-h-[360px]">
+                      <CommandEmpty>No matching elements.</CommandEmpty>
+                      {STYLE_ELEMENT_GROUP_ORDER.map((group) => (
+                        <CommandGroup key={group} heading={group}>
+                          <div className="grid grid-cols-2 gap-x-1">
+                            {presetsByGroup[group].map((el) => (
+                              <CommandItem
+                                key={el.value}
+                                value={`${el.label} ${el.value}`}
+                                onSelect={() => {
+                                  setUseCustomElement(false);
+                                  setFormData({ ...formData, element: el.value });
+                                  setElementPopoverOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    !useCustomElement && formData.element === el.value
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                <span className="truncate">{el.label}</span>
+                              </CommandItem>
+                            ))}
+                          </div>
+                        </CommandGroup>
+                      ))}
+                      <CommandSeparator />
+                      <CommandGroup heading="Other">
+                        <CommandItem
+                          value="custom element"
+                          onSelect={() => {
+                            setUseCustomElement(true);
+                            setFormData({
+                              ...formData,
+                              element: VALID_STYLE_ELEMENTS.includes(formData.element)
+                                ? ""
+                                : formData.element,
+                            });
+                            setElementPopoverOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              useCustomElement ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          Custom element...
+                        </CommandItem>
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              {useCustomElement ? (
+                <div className="space-y-1">
+                  <Input
+                    id="style-element-custom"
+                    placeholder="e.g., section"
+                    value={formData.element}
+                    onChange={(e) =>
+                      setFormData({ ...formData, element: e.target.value.toLowerCase() })
+                    }
+                    aria-invalid={customElementHasError}
+                  />
+                  {customElementHasError ? (
+                    <p className="text-xs text-destructive">
+                      Use a lowercase tag name starting with a letter (letters, digits, or hyphens).
+                    </p>
+                  ) : customElementIsUnknown ? (
+                    <p className="text-xs text-yellow-700 dark:text-yellow-400">
+                      &quot;{formData.element}&quot; is not in the recommended list. Make sure your CKEditor schema/plugins support it.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Use a lowercase tag name (letters, digits, hyphens). Make sure your CKEditor schema supports it.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  The HTML element that wraps the styled content
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

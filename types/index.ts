@@ -295,36 +295,101 @@ function validateToolbarGroup(group: unknown, index: number): string[] {
 }
 
 // Valid HTML elements for custom styles
-export const VALID_STYLE_ELEMENTS = [
-  "p", "span", "div", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "pre", "code"
-] as const;
+export type StyleElementGroup = "Block" | "Inline" | "List" | "Table" | "Semantic";
+
+export interface StyleElementPreset {
+  value: string;
+  label: string;
+  group: StyleElementGroup;
+}
+
+// Curated set of CKEditor 5 schema-friendly tags. The picker uses this for grouped
+// suggestions; the validator uses it to warn (not error) when an unknown tag is used.
+export const STYLE_ELEMENT_PRESETS: StyleElementPreset[] = [
+  { value: "p", label: "Paragraph (p)", group: "Block" },
+  { value: "div", label: "Division (div)", group: "Block" },
+  { value: "blockquote", label: "Blockquote (blockquote)", group: "Block" },
+  { value: "pre", label: "Preformatted (pre)", group: "Block" },
+  { value: "h1", label: "Heading 1 (h1)", group: "Block" },
+  { value: "h2", label: "Heading 2 (h2)", group: "Block" },
+  { value: "h3", label: "Heading 3 (h3)", group: "Block" },
+  { value: "h4", label: "Heading 4 (h4)", group: "Block" },
+  { value: "h5", label: "Heading 5 (h5)", group: "Block" },
+  { value: "h6", label: "Heading 6 (h6)", group: "Block" },
+  { value: "span", label: "Span (span)", group: "Inline" },
+  { value: "a", label: "Link (a)", group: "Inline" },
+  { value: "strong", label: "Strong (strong)", group: "Inline" },
+  { value: "em", label: "Emphasis (em)", group: "Inline" },
+  { value: "code", label: "Code (code)", group: "Inline" },
+  { value: "s", label: "Strikethrough (s)", group: "Inline" },
+  { value: "u", label: "Underline (u)", group: "Inline" },
+  { value: "sub", label: "Subscript (sub)", group: "Inline" },
+  { value: "sup", label: "Superscript (sup)", group: "Inline" },
+  { value: "mark", label: "Mark (mark)", group: "Inline" },
+  { value: "ul", label: "Unordered list (ul)", group: "List" },
+  { value: "ol", label: "Ordered list (ol)", group: "List" },
+  { value: "li", label: "List item (li)", group: "List" },
+  { value: "table", label: "Table (table)", group: "Table" },
+  { value: "tr", label: "Table row (tr)", group: "Table" },
+  { value: "td", label: "Table cell (td)", group: "Table" },
+  { value: "th", label: "Table header cell (th)", group: "Table" },
+  { value: "figure", label: "Figure (figure)", group: "Semantic" },
+  { value: "figcaption", label: "Figure caption (figcaption)", group: "Semantic" },
+  { value: "section", label: "Section (section)", group: "Semantic" },
+  { value: "article", label: "Article (article)", group: "Semantic" },
+  { value: "aside", label: "Aside (aside)", group: "Semantic" },
+];
+
+export const STYLE_ELEMENT_GROUP_ORDER: StyleElementGroup[] = [
+  "Block",
+  "Inline",
+  "List",
+  "Table",
+  "Semantic",
+];
+
+export const VALID_STYLE_ELEMENTS = STYLE_ELEMENT_PRESETS.map((p) => p.value);
+const VALID_STYLE_ELEMENT_SET = new Set<string>(VALID_STYLE_ELEMENTS);
+const TAG_NAME_REGEX = /^[a-z][a-z0-9-]*$/;
 
 // Validate a style definition object
-function validateStyleDefinition(style: unknown, index: number): string[] {
+function validateStyleDefinition(
+  style: unknown,
+  index: number
+): { errors: string[]; warnings: string[] } {
   const errors: string[] = [];
+  const warnings: string[] = [];
   const prefix = `Style ${index + 1}`;
-  
+
   if (typeof style !== 'object' || style === null) {
     errors.push(`${prefix}: Must be an object`);
-    return errors;
+    return { errors, warnings };
   }
-  
+
   const s = style as Record<string, unknown>;
-  
+
   // Required: name
   if (!s.name || typeof s.name !== 'string') {
     errors.push(`${prefix}: Missing required "name" (string)`);
   } else if (s.name.trim().length === 0) {
     errors.push(`${prefix}: "name" cannot be empty`);
   }
-  
-  // Required: element
+
+  // Required: element. Accept any regex-valid lowercase tag name; warn (do not error)
+  // when it isn't in the curated preset list so authors aren't blocked from using
+  // legitimate CKEditor schema tags that aren't on the suggested list.
   if (!s.element || typeof s.element !== 'string') {
     errors.push(`${prefix}: Missing required "element" (string)`);
-  } else if (!VALID_STYLE_ELEMENTS.includes(s.element as typeof VALID_STYLE_ELEMENTS[number])) {
-    errors.push(`${prefix}: Invalid element "${s.element}". Valid elements: ${VALID_STYLE_ELEMENTS.join(", ")}`);
+  } else if (!TAG_NAME_REGEX.test(s.element)) {
+    errors.push(
+      `${prefix}: Invalid element "${s.element}". Must be a lowercase HTML tag name (letters, digits, or hyphens, starting with a letter).`
+    );
+  } else if (!VALID_STYLE_ELEMENT_SET.has(s.element)) {
+    warnings.push(
+      `${prefix}: Element "${s.element}" is not in the recommended list. Ensure your CKEditor schema/plugins support it.`
+    );
   }
-  
+
   // Required: classes array
   if (!s.classes) {
     errors.push(`${prefix}: Missing required "classes" array`);
@@ -342,8 +407,8 @@ function validateStyleDefinition(style: unknown, index: number): string[] {
       }
     });
   }
-  
-  return errors;
+
+  return { errors, warnings };
 }
 
 // Validate editor profile JSON configuration
@@ -447,8 +512,10 @@ export function validateProfileConfig(jsonString: string): ValidationResult {
       } else {
         const styleArray = styleConfig.definitions as unknown[];
         styleArray.forEach((styleDef, index) => {
-          const styleErrors = validateStyleDefinition(styleDef, index);
+          const { errors: styleErrors, warnings: styleWarnings } =
+            validateStyleDefinition(styleDef, index);
           errors.push(...styleErrors);
+          warnings.push(...styleWarnings);
         });
 
         // Warning if style toolbar item is not present

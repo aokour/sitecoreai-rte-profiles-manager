@@ -301,43 +301,49 @@ export interface StyleElementPreset {
   value: string;
   label: string;
   group: StyleElementGroup;
+  /**
+   * Extra search synonyms surfaced to the picker so users can find a tag by intent
+   * (e.g. "anchor" -> <a>, "bold" -> <strong>, "highlight" -> <mark>).
+   * Only used for fuzzy search; not displayed.
+   */
+  keywords?: string[];
 }
 
 // Curated set of CKEditor 5 schema-friendly tags. The picker uses this for grouped
 // suggestions; the validator uses it to warn (not error) when an unknown tag is used.
 export const STYLE_ELEMENT_PRESETS: StyleElementPreset[] = [
-  { value: "p", label: "Paragraph (p)", group: "Block" },
-  { value: "div", label: "Division (div)", group: "Block" },
-  { value: "blockquote", label: "Blockquote (blockquote)", group: "Block" },
-  { value: "pre", label: "Preformatted (pre)", group: "Block" },
-  { value: "h1", label: "Heading 1 (h1)", group: "Block" },
-  { value: "h2", label: "Heading 2 (h2)", group: "Block" },
-  { value: "h3", label: "Heading 3 (h3)", group: "Block" },
-  { value: "h4", label: "Heading 4 (h4)", group: "Block" },
-  { value: "h5", label: "Heading 5 (h5)", group: "Block" },
-  { value: "h6", label: "Heading 6 (h6)", group: "Block" },
-  { value: "span", label: "Span (span)", group: "Inline" },
-  { value: "a", label: "Link (a)", group: "Inline" },
-  { value: "strong", label: "Strong (strong)", group: "Inline" },
-  { value: "em", label: "Emphasis (em)", group: "Inline" },
-  { value: "code", label: "Code (code)", group: "Inline" },
-  { value: "s", label: "Strikethrough (s)", group: "Inline" },
-  { value: "u", label: "Underline (u)", group: "Inline" },
-  { value: "sub", label: "Subscript (sub)", group: "Inline" },
-  { value: "sup", label: "Superscript (sup)", group: "Inline" },
-  { value: "mark", label: "Mark (mark)", group: "Inline" },
-  { value: "ul", label: "Unordered list (ul)", group: "List" },
-  { value: "ol", label: "Ordered list (ol)", group: "List" },
-  { value: "li", label: "List item (li)", group: "List" },
-  { value: "table", label: "Table (table)", group: "Table" },
-  { value: "tr", label: "Table row (tr)", group: "Table" },
-  { value: "td", label: "Table cell (td)", group: "Table" },
-  { value: "th", label: "Table header cell (th)", group: "Table" },
-  { value: "figure", label: "Figure (figure)", group: "Semantic" },
-  { value: "figcaption", label: "Figure caption (figcaption)", group: "Semantic" },
-  { value: "section", label: "Section (section)", group: "Semantic" },
-  { value: "article", label: "Article (article)", group: "Semantic" },
-  { value: "aside", label: "Aside (aside)", group: "Semantic" },
+  { value: "p", label: "Paragraph (p)", group: "Block", keywords: ["text"] },
+  { value: "div", label: "Division (div)", group: "Block", keywords: ["container", "wrapper"] },
+  { value: "blockquote", label: "Blockquote (blockquote)", group: "Block", keywords: ["quote", "citation"] },
+  { value: "pre", label: "Preformatted (pre)", group: "Block", keywords: ["monospace", "preformatted text"] },
+  { value: "h1", label: "Heading 1 (h1)", group: "Block", keywords: ["heading", "title"] },
+  { value: "h2", label: "Heading 2 (h2)", group: "Block", keywords: ["heading", "title", "subtitle"] },
+  { value: "h3", label: "Heading 3 (h3)", group: "Block", keywords: ["heading", "subtitle"] },
+  { value: "h4", label: "Heading 4 (h4)", group: "Block", keywords: ["heading"] },
+  { value: "h5", label: "Heading 5 (h5)", group: "Block", keywords: ["heading"] },
+  { value: "h6", label: "Heading 6 (h6)", group: "Block", keywords: ["heading"] },
+  { value: "span", label: "Span (span)", group: "Inline", keywords: ["inline", "wrapper"] },
+  { value: "a", label: "Link (a)", group: "Inline", keywords: ["anchor", "hyperlink", "url", "href"] },
+  { value: "strong", label: "Strong (strong)", group: "Inline", keywords: ["bold", "important"] },
+  { value: "em", label: "Emphasis (em)", group: "Inline", keywords: ["italic", "emphasis"] },
+  { value: "code", label: "Code (code)", group: "Inline", keywords: ["monospace", "inline code"] },
+  { value: "s", label: "Strikethrough (s)", group: "Inline", keywords: ["strike", "deleted", "del"] },
+  { value: "u", label: "Underline (u)", group: "Inline", keywords: ["underline"] },
+  { value: "sub", label: "Subscript (sub)", group: "Inline", keywords: ["subscript"] },
+  { value: "sup", label: "Superscript (sup)", group: "Inline", keywords: ["superscript"] },
+  { value: "mark", label: "Mark (mark)", group: "Inline", keywords: ["highlight", "highlighter"] },
+  { value: "ul", label: "Unordered list (ul)", group: "List", keywords: ["bullet list", "list"] },
+  { value: "ol", label: "Ordered list (ol)", group: "List", keywords: ["numbered list", "list"] },
+  { value: "li", label: "List item (li)", group: "List", keywords: ["list item", "bullet"] },
+  { value: "table", label: "Table (table)", group: "Table", keywords: ["grid", "data"] },
+  { value: "tr", label: "Table row (tr)", group: "Table", keywords: ["row"] },
+  { value: "td", label: "Table cell (td)", group: "Table", keywords: ["cell", "data cell"] },
+  { value: "th", label: "Table header cell (th)", group: "Table", keywords: ["header cell", "header"] },
+  { value: "figure", label: "Figure (figure)", group: "Semantic", keywords: ["image", "media", "illustration"] },
+  { value: "figcaption", label: "Figure caption (figcaption)", group: "Semantic", keywords: ["caption", "image caption"] },
+  { value: "section", label: "Section (section)", group: "Semantic", keywords: ["section"] },
+  { value: "article", label: "Article (article)", group: "Semantic", keywords: ["article", "post"] },
+  { value: "aside", label: "Aside (aside)", group: "Semantic", keywords: ["sidebar", "callout"] },
 ];
 
 export const STYLE_ELEMENT_GROUP_ORDER: StyleElementGroup[] = [

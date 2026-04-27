@@ -333,7 +333,11 @@ export function StyleEditor({ styles, onChange, hasStyleToolbarItem, isInModal =
 
             <div className="space-y-2">
               <Label htmlFor="style-element">HTML Element</Label>
-              <Popover open={elementPopoverOpen} onOpenChange={setElementPopoverOpen}>
+              <Popover
+                open={elementPopoverOpen}
+                onOpenChange={setElementPopoverOpen}
+                modal
+              >
                 <PopoverTrigger asChild>
                   <Button
                     id="style-element"
@@ -364,7 +368,12 @@ export function StyleEditor({ styles, onChange, hasStyleToolbarItem, isInModal =
                             {presetsByGroup[group].map((el) => (
                               <CommandItem
                                 key={el.value}
-                                value={`${el.label} ${el.value}`}
+                                value={[
+                                  el.label,
+                                  el.value,
+                                  el.group,
+                                  ...(el.keywords ?? []),
+                                ].join(" ")}
                                 onSelect={() => {
                                   setUseCustomElement(false);
                                   setFormData({ ...formData, element: el.value });

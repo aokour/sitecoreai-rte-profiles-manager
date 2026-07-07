@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Libre_Franklin } from "next/font/google";
 import "./globals.css";
 import { MarketplaceProvider } from "@/components/providers/marketplace";
 import { Toaster } from "@/components/ui/sonner";
@@ -15,6 +15,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const libreFranklin = Libre_Franklin({
+  variable: "--font-libre-franklin",
+  subsets: ["latin"],
+  weight: ["700"],
+});
+
 export const metadata: Metadata = {
   title: "SitecoreAI RTE Profiles Manager",
   description: "Manage Editor Profiles and site assignments for XM Cloud",
@@ -28,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${libreFranklin.variable} antialiased`}
       >
         <MarketplaceProvider>
           {children}

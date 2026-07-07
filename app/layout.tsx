@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { MarketplaceProvider } from "@/components/providers/marketplace";
 import { Toaster } from "@/components/ui/sonner";
+import { AeLogoCorner } from "@/components/AeLogoCorner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +34,7 @@ export default function RootLayout({
           {children}
           <Toaster />
         </MarketplaceProvider>
+        <AeLogoCorner />
       </body>
     </html>
   );

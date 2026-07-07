@@ -13,6 +13,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { AeLogoAnimated } from "@/components/AeLogoAnimated";
 
 interface ClientSDKProviderProps {
   children: ReactNode;
@@ -27,7 +28,14 @@ export const MarketplaceProvider: React.FC<ClientSDKProviderProps> = ({
   const [client, setClient] = useState<ClientSDK | null>(null);
   const [appContext, setAppContext] = useState<ApplicationContext | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+
+  // "loading" → "fading" → "done" as the SDK becomes ready
+  const [overlayStage, setOverlayStage] = useState<
+    "loading" | "fading" | "done"
+  >("loading");
+  // Tracks whether enough time has passed for the full logo animation to play (~3.2s)
+  const [minTimeReady, setMinTimeReady] = useState(false);
+  const [sdkReady, setSdkReady] = useState(false);
 
   useEffect(() => {
     if (client) {
@@ -47,33 +55,41 @@ export const MarketplaceProvider: React.FC<ClientSDKProviderProps> = ({
         modules: [XMC],
       };
       try {
-        setLoading(true);
         const client = await ClientSDK.init(config);
         setClient(client);
       } catch (error) {
         console.error("Error initializing client SDK", error);
         setError("Error initializing client SDK");
-      } finally {
-        setLoading(false);
       }
     };
 
     init();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-          <div className="space-y-2">
-            <h2 className="text-xl font-semibold">Connecting to Sitecore Marketplace</h2>
-            <p className="text-muted-foreground">Please wait while we initialize the SDK...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Minimum display time — enough for the full entrance animation (~2.3s) + brief pause
+  useEffect(() => {
+    const t = setTimeout(() => setMinTimeReady(true), 2100);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Mark SDK ready once both client and appContext are set
+  useEffect(() => {
+    if (client && appContext) {
+      setTimeout(() => setSdkReady(true), 0);
+    }
+  }, [client, appContext]);
+
+  // Start fade only when BOTH the animation has played AND the SDK is ready
+  useEffect(() => {
+    if (sdkReady && minTimeReady) {
+      const t1 = setTimeout(() => setOverlayStage("fading"), 0);
+      const t2 = setTimeout(() => setOverlayStage("done"), 500);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [sdkReady, minTimeReady]);
 
   if (error) {
     return (
@@ -95,12 +111,14 @@ export const MarketplaceProvider: React.FC<ClientSDKProviderProps> = ({
             </svg>
           </div>
           <div className="space-y-2">
-            <h1 className="text-xl font-semibold text-destructive">Connection Error</h1>
+            <h1 className="text-xl font-semibold text-destructive">
+              Connection Error
+            </h1>
             <p className="text-muted-foreground">{error}</p>
           </div>
           <div className="text-sm text-muted-foreground bg-muted p-4 rounded-lg">
-            Please ensure this app is loaded within the Sitecore Marketplace parent window
-            and the extension points are properly configured.
+            Please ensure this app is loaded within the Sitecore Marketplace
+            parent window and the extension points are properly configured.
           </div>
           <button
             onClick={() => window.location.reload()}
@@ -113,38 +131,27 @@ export const MarketplaceProvider: React.FC<ClientSDKProviderProps> = ({
     );
   }
 
-  if (!client) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="animate-pulse">
-            <div className="w-12 h-12 rounded-full bg-muted mx-auto" />
-          </div>
-          <p className="text-muted-foreground">Initializing SDK client...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!appContext) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="animate-pulse">
-            <div className="w-12 h-12 rounded-full bg-muted mx-auto" />
-          </div>
-          <p className="text-muted-foreground">Loading application context...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <ClientSDKContext.Provider value={client}>
-      <AppContextContext.Provider value={appContext}>
-        {children}
-      </AppContextContext.Provider>
-    </ClientSDKContext.Provider>
+    <>
+      {overlayStage !== "done" && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background pointer-events-none"
+          style={{
+            opacity: overlayStage === "fading" ? 0 : 1,
+            transition: "opacity 0.5s ease-out",
+          }}
+        >
+          <AeLogoAnimated className="w-72" animate={true} />
+        </div>
+      )}
+      {client && appContext && (
+        <ClientSDKContext.Provider value={client}>
+          <AppContextContext.Provider value={appContext}>
+            {children}
+          </AppContextContext.Provider>
+        </ClientSDKContext.Provider>
+      )}
+    </>
   );
 };
 
